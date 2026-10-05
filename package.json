@@ -1,0 +1,58 @@
+{
+  "name": "@script-flow/procedural-memory",
+  "version": "0.1.0",
+  "description": "Procedural memory for LLM agents: record solved tasks, compile them into executable skills, replay them without reasoning again",
+  "keywords": [
+    "llm",
+    "agent",
+    "procedural-memory",
+    "skills",
+    "tool-calling",
+    "agent-memory",
+    "caching"
+  ],
+  "homepage": "https://github.com/script-flow/procedural-memory#readme",
+  "bugs": {
+    "url": "https://github.com/script-flow/procedural-memory/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/script-flow/procedural-memory.git"
+  },
+  "license": "MIT",
+  "author": "Antonio Carmellino - tony-carmellino",
+  "type": "module",
+  "types": "./types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./types/index.d.ts",
+      "import": "./src/index.mjs"
+    },
+    "./runtime": {
+      "types": "./types/runtime.d.ts",
+      "import": "./src/runtime.mjs"
+    },
+    "./package.json": "./package.json"
+  },
+  "sideEffects": false,
+  "files": [
+    "src",
+    "types",
+    "README.md",
+    "CHANGELOG.md"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "node --test \"test/**/*.test.mjs\"",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "prepublishOnly": "npm test && npm run typecheck"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3"
+  }
+}
