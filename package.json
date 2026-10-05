@@ -1,6 +1,6 @@
 {
   "name": "@script-flow/procedural-memory",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Procedural memory for LLM agents: record solved tasks, compile them into executable skills, replay them without reasoning again",
   "keywords": [
     "llm",

@@ -47,8 +47,32 @@ export interface ProceduralMemoryOptions {
     identifiers?: IdentifierRules;
     /** Helper import written into generated scripts. */
     runtimeImport?: string;
+    /**
+     * Last word on whether a run may become a skill, called before compiling.
+     * Unset, nothing changes. See `mutationVerifier` for the common case.
+     */
+    verify?: Verify;
     logger?: { warn?: (message: string) => void };
 }
+
+export interface VerifyResult {
+    ok: boolean;
+    reason: string;
+}
+
+export interface VerifyContext {
+    intent: string;
+    /** The successful steps, i.e. the ones that would be compiled. */
+    steps: RecordedStep[];
+    /** The skill already registered for this intent, when there is one. */
+    skill: SkillDefinition | null;
+}
+
+/**
+ * Your check on a finished run. Returning `{ ok: false, reason }` refuses the run:
+ * `learn()` hands that reason straight back. Throwing also refuses it.
+ */
+export type Verify = (context: VerifyContext) => VerifyResult;
 
 /** A step as recorded during an agent run. */
 export interface RecordedStep {
@@ -193,5 +217,13 @@ export function runSkill(definition: SkillDefinition, params: Record<string, unk
 
 export const defaultIdentifiers: Required<IdentifierRules>;
 export function resolveIdentifiers(identifiers?: IdentifierRules): Required<IdentifierRules>;
+
+/**
+ * A `verify` that refuses a run whose intent promises a change when no mutating tool ran.
+ * `isMutation` is required: only you know which of your tools write.
+ */
+export function mutationVerifier(options: { isMutation: (tool: string) => boolean }): Verify;
+export function impliesMutation(intent: string): boolean;
+export const MUTATION_VERBS: readonly string[];
 
 export { renderArgs, parseToolContent, getAtPath, SkillParameterError } from "./runtime.js";

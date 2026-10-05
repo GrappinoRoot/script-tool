@@ -10,7 +10,7 @@
 // stay yours, so whatever you enforce around tools (permissions, confirmations, guards)
 // still applies when the caller is a compiled skill.
 import { extractIntent } from "./intent-extractor.mjs";
-import { createRecorder, isSuccessfulRun } from "./procedure-recorder.mjs";
+import { createRecorder, isSuccessfulRun, successfulSteps } from "./procedure-recorder.mjs";
 import { compileProcedure } from "./skill-compiler.mjs";
 import { listSkills, findSkill, saveSkill, recordUsage } from "./skill-registry.mjs";
 import { runSkill } from "./skill-runner.mjs";
@@ -23,6 +23,17 @@ export { loadRegistry, listSkills, findSkill, saveSkill, recordUsage, REGISTRY_F
 export { runSkill } from "./skill-runner.mjs";
 export { defaultIdentifiers, resolveIdentifiers } from "./identifiers.mjs";
 export { renderArgs, parseToolContent, getAtPath, SkillParameterError } from "./runtime.mjs";
+export { mutationVerifier, impliesMutation, MUTATION_VERBS } from "./mutation-verifier.mjs";
+
+/**
+ * Same tools, order and duplicates aside. Both lists come from the compiler already
+ * deduplicated; the registry is a file a human can edit, so normalize anyway.
+ */
+function sameTools(a, b) {
+    const left = new Set(a ?? []);
+    const right = new Set(b ?? []);
+    return left.size === right.size && [...left].every(tool => right.has(tool));
+}
 
 /**
  * Creates the procedural memory of an agent.
@@ -37,6 +48,11 @@ export { renderArgs, parseToolContent, getAtPath, SkillParameterError } from "./
  * @param {{ find?: Function, replace?: Function }} [options.identifiers]
  *   how to recognize an opaque identifier (default: neutral heuristic, see identifiers.mjs)
  * @param {string} [options.runtimeImport] helper import written into generated scripts
+ * @param {({ intent: string, steps: Array, skill: object|null }) => { ok: boolean, reason: string }} [options.verify]
+ *   last word on whether a run may become a skill, called before compiling. The structural
+ *   check (isSuccessfulRun) cannot tell that an agent answered "which first name?" instead
+ *   of creating the contact: only you know what your tools do. See mutationVerifier for the
+ *   common case. Unset, nothing changes.
  * @param {{ warn?: Function }} [options.logger]
  * @returns {{ resolve: Function, run: Function, learn: Function, skills: Function }}
  */
@@ -48,6 +64,7 @@ export function createProceduralMemory({
     examples,
     identifiers,
     runtimeImport,
+    verify,
     logger = console
 } = {}) {
     if (!root) throw new Error("createProceduralMemory: 'root' is required (the skills directory)");
@@ -133,6 +150,19 @@ export function createProceduralMemory({
             const success = isSuccessfulRun(trace);
             if (!success.ok) return { saved: null, reason: success.reason };
 
+            if (typeof verify === "function") {
+                let verdict;
+                try {
+                    // The steps that would be compiled, not the path taken to find them.
+                    verdict = verify({ intent: task.intent, steps: successfulSteps(trace), skill: task.skill ?? null });
+                } catch (error) {
+                    // Fail closed: a verifier that breaks must not silently let runs through.
+                    logger?.warn?.(`procedural-memory: verify threw (${error.message})`);
+                    return { saved: null, reason: `verify failed: ${error.message}` };
+                }
+                if (!verdict?.ok) return { saved: null, reason: verdict?.reason || "verify refused the run" };
+            }
+
             const compiled = compileProcedure({
                 intent: task.intent,
                 parameters: task.parameters,
@@ -141,6 +171,19 @@ export function createProceduralMemory({
                 runtimeImport
             });
             if (!compiled.ok) return { saved: null, reason: compiled.reason };
+
+            // A skill was registered for this intent, and we are here, so it failed. Same tools
+            // means the procedure is being repaired because the environment moved (a renamed
+            // field, a relocated endpoint): replace it. Different tools mean another task landed
+            // under the same name - keep what already works rather than overwrite it.
+            if (task.skill && !sameTools(task.skill.tools, compiled.definition.tools)) {
+                const before = [...new Set(task.skill.tools ?? [])].join(", ") || "none";
+                const after = compiled.definition.tools.join(", ");
+                return {
+                    saved: null,
+                    reason: `the registered skill for ${task.intent} uses different tools (${before} vs ${after}): not replacing it`
+                };
+            }
 
             return { saved: saveSkill(compiled, root), reason: "" };
         },

@@ -8,11 +8,16 @@ import {
     findSkill,
     runSkill,
     renderArgs,
+    mutationVerifier,
+    impliesMutation,
+    MUTATION_VERBS,
     type CallTool,
     type Chat,
     type Task,
     type HandleResult,
-    type SkillDefinition
+    type SkillDefinition,
+    type Verify,
+    type VerifyResult
 } from "@script-flow/procedural-memory";
 
 // --- the shapes a host provides ---------------------------------------------
@@ -34,6 +39,22 @@ const memory = createProceduralMemory({
     },
     logger: { warn: (message) => console.warn(message) }
 });
+
+// --- learning guards --------------------------------------------------------
+const writeTools = new Set(["createRecord", "updateRecord"]);
+const ready: Verify = mutationVerifier({ isMutation: (tool) => writeTools.has(tool) });
+
+const custom: Verify = ({ intent, steps, skill }): VerifyResult => {
+    const touched: string[] = steps.map((step) => step.tool);
+    const previous: SkillDefinition | null = skill;
+    return impliesMutation(intent) && !touched.length
+        ? { ok: false, reason: `${intent} did nothing (was: ${previous?.intent ?? "new"})` }
+        : { ok: true, reason: "" };
+};
+
+const verbs: readonly string[] = MUTATION_VERBS;
+
+createProceduralMemory({ root: ".agents/procedural-skills", chat, verify: verbs.length ? ready : custom });
 
 // --- one-call flow ----------------------------------------------------------
 const handled: HandleResult<string> = await memory.handle<string>("Find the customer named Acme", {
