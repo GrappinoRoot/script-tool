@@ -1,0 +1,4 @@
+node_modules/
+.kilo/
+*.log
+.DS_Store

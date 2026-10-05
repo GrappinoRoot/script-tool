@@ -11,16 +11,16 @@
     "agent-memory",
     "caching"
   ],
-  "homepage": "https://github.com/script-flow/procedural-memory#readme",
+  "homepage": "https://github.com/GrappinoRoot/script-tool#readme",
   "bugs": {
-    "url": "https://github.com/script-flow/procedural-memory/issues"
+    "url": "https://github.com/GrappinoRoot/script-tool/issues"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/script-flow/procedural-memory.git"
+    "url": "git+https://github.com/GrappinoRoot/script-tool.git"
   },
   "license": "MIT",
-  "author": "Antonio Carmellino - tony-carmellino",
+  "author": "Antonio Carmellino <tonycarmellino@gmail.com>",
   "type": "module",
   "types": "./types/index.d.ts",
   "exports": {
@@ -45,7 +45,7 @@
     "node": ">=20"
   },
   "scripts": {
-    "test": "node --test \"test/**/*.test.mjs\"",
+    "test": "node --test test/*.test.mjs",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "prepublishOnly": "npm test && npm run typecheck"
   },

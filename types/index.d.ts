@@ -1,5 +1,5 @@
 // Type definitions for @script-flow/procedural-memory
-// Project: https://github.com/script-flow/procedural-memory
+// Project: https://github.com/GrappinoRoot/script-tool
 
 /** One piece of a tool result, in the shape MCP and most tool APIs use. */
 export interface ToolContentPart {

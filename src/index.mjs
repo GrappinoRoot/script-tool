@@ -18,7 +18,7 @@ import { resolveIdentifiers } from "./identifiers.mjs";
 
 export { extractIntent, buildIntentPrompt, normalizeParameterValue } from "./intent-extractor.mjs";
 export { createRecorder, isSuccessfulRun, successfulSteps } from "./procedure-recorder.mjs";
-export { compileProcedure, findValuePath, DEFAULT_RUNTIME_IMPORT } from "./skill-compiler.mjs";
+export { compileProcedure, findValuePath, findValuePaths, DEFAULT_RUNTIME_IMPORT } from "./skill-compiler.mjs";
 export { loadRegistry, listSkills, findSkill, saveSkill, recordUsage, REGISTRY_FILE } from "./skill-registry.mjs";
 export { runSkill } from "./skill-runner.mjs";
 export { defaultIdentifiers, resolveIdentifiers } from "./identifiers.mjs";

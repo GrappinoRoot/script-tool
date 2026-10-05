@@ -36,4 +36,4 @@ TypeScript declarations are included.
 The library knows **neither your tools nor your model**: you pass `chat` and `callTool`, and they stay yours. As a result, whatever you enforce around tools — permissions, confirmations, rate limits, auditing — still applies when the caller is a compiled skill.
 
 
-Licenze MIT.
+Licensed under MIT.
