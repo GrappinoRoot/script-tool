@@ -220,9 +220,12 @@ export function resolveIdentifiers(identifiers?: IdentifierRules): Required<Iden
 
 /**
  * A `verify` that refuses a run whose intent promises a change when no mutating tool ran.
- * `isMutation` is required: only you know which of your tools write.
+ * `isMutation` is required: only you know which of your tools write. It receives the step's
+ * arguments too, because with a generic tool it is those, not the name, that decide.
  */
-export function mutationVerifier(options: { isMutation: (tool: string) => boolean }): Verify;
+export function mutationVerifier(options: {
+    isMutation: (tool: string, args: Record<string, unknown>) => boolean;
+}): Verify;
 export function impliesMutation(intent: string): boolean;
 export const MUTATION_VERBS: readonly string[];
 

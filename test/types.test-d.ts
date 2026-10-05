@@ -44,6 +44,11 @@ const memory = createProceduralMemory({
 const writeTools = new Set(["createRecord", "updateRecord"]);
 const ready: Verify = mutationVerifier({ isMutation: (tool) => writeTools.has(tool) });
 
+// A generic tool: the arguments decide, not the name. Both forms must keep compiling.
+const byArgs: Verify = mutationVerifier({
+    isMutation: (tool, args) => tool === "restCall" && args.method === "POST"
+});
+
 const custom: Verify = ({ intent, steps, skill }): VerifyResult => {
     const touched: string[] = steps.map((step) => step.tool);
     const previous: SkillDefinition | null = skill;
@@ -54,7 +59,8 @@ const custom: Verify = ({ intent, steps, skill }): VerifyResult => {
 
 const verbs: readonly string[] = MUTATION_VERBS;
 
-createProceduralMemory({ root: ".agents/procedural-skills", chat, verify: verbs.length ? ready : custom });
+createProceduralMemory({ root: ".agents/procedural-skills", chat, verify: verbs.length ? ready : byArgs });
+createProceduralMemory({ root: ".agents/procedural-skills", chat, verify: custom });
 
 // --- one-call flow ----------------------------------------------------------
 const handled: HandleResult<string> = await memory.handle<string>("Find the customer named Acme", {

@@ -4,6 +4,14 @@ All notable changes to this project are documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.1] - 2026-10-05
+
+### Added
+
+- `isMutation` now also receives the step's arguments: `(tool, args) => boolean`. With a
+  generic tool — a `restCall`, an `execute` — it is the arguments that say whether anything
+  was written, not the tool's name. Existing one-parameter implementations are unaffected.
+
 ## [0.2.0] - 2026-10-05
 
 Two guards on what gets learned, both found in real use: a registry can be corrupted

@@ -228,6 +228,44 @@ test("a verify that throws fails closed instead of letting the run through", asy
     assert.equal(learned.reason, "verify failed: verifier is down");
 });
 
+// A generic tool writes or not depending on its arguments, not on its name: that is why
+// isMutation receives them.
+const isWriteCall = (tool, args) => tool === "restCall" && ["POST", "PATCH", "DELETE"].includes(args?.method);
+
+test("mutationVerifier refuses when the generic tool was only used to read", async () => {
+    const root = tempRoot();
+    const memory = memoryWith(root, CONTACT_INTENT, { verify: mutationVerifier({ isMutation: isWriteCall }) });
+
+    const read = {
+        tool: "restCall",
+        args: { method: "GET", path: "/services/data/v62.0/query?q=LastName+%3D+'Rossi'" },
+        ok: true,
+        content: json({ records: [] })
+    };
+
+    const learned = memory.learn(await createContactRun(memory, [read]));
+
+    assert.equal(learned.saved, null, "same tool, but no write happened");
+    assert.match(learned.reason, /no mutating tool ran/);
+});
+
+test("mutationVerifier admits the same tool when its arguments make it a write", async () => {
+    const root = tempRoot();
+    const memory = memoryWith(root, CONTACT_INTENT, { verify: mutationVerifier({ isMutation: isWriteCall }) });
+
+    const write = {
+        tool: "restCall",
+        args: { method: "POST", path: "/services/data/v62.0/sobjects/Contact", body: { LastName: "Rossi" } },
+        ok: true,
+        content: json({ id: "003Qy00000AbCdEfGHI" })
+    };
+
+    const learned = memory.learn(await createContactRun(memory, [write]));
+
+    assert.ok(learned.saved, "the arguments identify it as a write");
+    assert.deepEqual(learned.saved.tools, ["restCall"]);
+});
+
 test("mutationVerifier requires isMutation: only the host knows which tools write", () => {
     assert.throws(() => mutationVerifier(), /isMutation/);
     assert.throws(() => mutationVerifier({ isMutation: "yes" }), /isMutation/);

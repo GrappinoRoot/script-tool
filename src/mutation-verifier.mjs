@@ -26,9 +26,11 @@ export function impliesMutation(intent) {
  * Builds a `verify` function that refuses a run whose intent promises a change when no
  * mutating tool actually ran.
  *
- * @param {{ isMutation: (tool: string) => boolean }} options
+ * @param {{ isMutation: (tool: string, args: object) => boolean }} options
  *   `isMutation` is yours because only you know your tools: the library never guesses which
- *   ones write. It is required - without it the check could say nothing at all.
+ *   ones write. It is required - without it the check could say nothing at all. It also gets
+ *   the step's arguments, because a generic tool (a `restCall`, an `execute`) writes or not
+ *   depending on them, not on its name.
  * @returns {({ intent: string, steps: Array }) => { ok: boolean, reason: string }}
  */
 export function mutationVerifier({ isMutation } = {}) {
@@ -39,7 +41,7 @@ export function mutationVerifier({ isMutation } = {}) {
     return ({ intent, steps }) => {
         if (!impliesMutation(intent)) return { ok: true, reason: "" };
         // Only successful steps are passed in: a write that failed changed nothing either.
-        if ((steps ?? []).some(step => isMutation(step.tool))) return { ok: true, reason: "" };
+        if ((steps ?? []).some(step => isMutation(step.tool, step.args))) return { ok: true, reason: "" };
 
         return {
             ok: false,
